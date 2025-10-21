@@ -22,6 +22,7 @@ namespace ETICARET.Entities
 
         public string Address { get; set; }
 
+        public string PaymentId { get; set; }
 
         public string City { get; set; }    
 

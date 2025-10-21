@@ -61,7 +61,7 @@ namespace ETICARET.WebUI
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Admin}/{action=CreateProduct}/{id?}");
 
             app.Run();
         }
