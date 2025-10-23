@@ -179,6 +179,10 @@ namespace ETICARET.DataAccess.Migrations
                     b.Property<int>("OrderState")
                         .HasColumnType("int");
 
+                    b.Property<string>("PaymentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PaymentToken")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

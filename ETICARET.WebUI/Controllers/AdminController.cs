@@ -45,6 +45,75 @@ namespace ETICARET.WebUI.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> UserEdit(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if(user == null)
+            {
+                return NotFound();
+            }
+
+            var model = new AdminUserModel
+            {
+                Email = user.Email,
+                FullName = user.FullName,
+                IsAdmin = await _userManager.IsInRoleAsync(user, "Admin")
+            };
+
+            return View(model);
+        }
+
+        public async Task<IActionResult> UserEdit(AdminUserModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if(user == null)
+            {
+                return NotFound();
+            }
+
+            user.FullName = model.FullName;
+            user.EmailConfirmed = model.EmailConfirmed;
+
+            var updateResult = await _userManager.UpdateAsync(user);
+
+            if (!updateResult.Succeeded)
+            {
+                foreach (var error in updateResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            var isInAdminRole = await _userManager.IsInRoleAsync(user, "Admin");
+
+            if(model.IsAdmin && !isInAdminRole)
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Admin");
+            }
+
+            else if(!model.IsAdmin && isInAdminRole)
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Admin");
+            }
+
+            TempData["SuccessMessage"] = "Kullanıcı başarıyla güncellendi";
+            return RedirectToAction("products");
+
+        }
         [HttpPost]
         public async Task<IActionResult> CreateProduct(ProductModel model, List<IFormFile> files)
         {

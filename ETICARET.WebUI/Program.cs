@@ -1,3 +1,8 @@
+using ETICARET.Business.Abstract;
+using ETICARET.Business.Concrete;
+using ETICARET.DataAccess.Abstract;
+using ETICARET.DataAccess.Concrete;
+using ETICARET.Entities;
 using ETICARET.WebUI.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,8 +47,22 @@ namespace ETICARET.WebUI
                     options.SignIn.RequireConfirmedEmail = true;
                 });
 
+            builder.Services.AddScoped<IProductDal, EfCoreProductDal>();
+            builder.Services.AddScoped<IProductService, ProductManager>();
+            builder.Services.AddScoped<ICategoryDal, EfCoreCategoryDal>();
+            builder.Services.AddScoped<ICategoryService, CategoryManager>();
+            builder.Services.AddScoped<ICommentDal, EfCoreCommentDal>();
+            builder.Services.AddScoped<ICommentService, CommentManager>();
+            builder.Services.AddScoped<ICartDal, EfCoreCartDal>();
+            builder.Services.AddScoped<ICartService, CartManager>();
+            builder.Services.AddScoped<IOrderDal, EfCoreOrdelDal>();
+            builder.Services.AddScoped<IOrderService, OrderManager>();
+
             var app = builder.Build();
 
+            // Seed Database 
+            SeedDatabase.Seed();
+            
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -62,6 +81,8 @@ namespace ETICARET.WebUI
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Admin}/{action=CreateProduct}/{id?}");
+
+            SeedIdentity.Seed(userManager, roleManager, app.Configuration).Wait();
 
             app.Run();
         }

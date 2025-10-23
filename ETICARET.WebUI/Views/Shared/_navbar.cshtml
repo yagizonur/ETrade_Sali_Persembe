@@ -1,0 +1,138 @@
+﻿<nav class="main-navbar">
+    <div class="nav-container">
+        <!-- Logo & Brand -->
+        <div class="nav-brand">
+            <a asp-controller="Home" asp-action="Index" class="brand-link">
+                <div class="brand-icon">🛒</div>
+                <span class="brand-text">ETiCARET</span>
+            </a>
+        </div>
+
+        <!-- Main Navigation -->
+        <div class="nav-menu" id="navMenu">
+            <div class="nav-links">
+                <a asp-controller="Home" asp-action="Index" class="nav-link">
+                    <i class="icon-home"></i>
+                    <span>Ana Sayfa</span>
+                </a>
+                <a asp-controller="Shop" asp-action="List" class="nav-link">
+                    <i class="icon-grid"></i>
+                    <span>Ürünler</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-link dropdown-btn">
+                        <i class="icon-tag"></i>
+                        <span>Kategoriler</span>
+                        <i class="icon-chevron"></i>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="#" class="dropdown-item">
+                            <i class="icon-laptop"></i>
+                            <span>Elektronik</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="icon-shirt"></i>
+                            <span>Giyim</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="icon-home-outline"></i>
+                            <span>Ev & Yaşam</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="nav-search">
+                <form asp-controller="Shop" asp-action="Search" method="get" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" name="q" placeholder="Ürün ara..." class="search-input">
+                        <button type="submit" class="search-btn">
+                            <i class="icon-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- User Actions -->
+            <div class="nav-actions">
+                <!-- Cart -->
+                <a asp-controller="Cart" asp-action="Index" class="action-btn cart-btn">
+                    <div class="btn-icon">
+                        <i class="icon-shopping-bag"></i>
+                        <span class="cart-count">3</span>
+                    </div>
+                    <span class="btn-text">Sepet</span>
+                </a>
+
+                <!-- User Menu -->
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="nav-dropdown user-dropdown">
+                        <button class="action-btn user-btn">
+                            <div class="btn-icon">
+                                <i class="icon-user"></i>
+                            </div>
+                            <span class="btn-text">Hesabım</span>
+                            <i class="icon-chevron"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <div class="user-info">
+                                <div class="user-avatar">@User.Identity.Name.Substring(0, 1).ToUpper()</div>
+                                <div class="user-details">
+                                    <span class="user-name">@User.Identity.Name</span>
+                                    <span class="user-email">user@example.com</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item">
+                                <i class="icon-user"></i>
+                                <span>Profil</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="icon-package"></i>
+                                <span>Siparişlerim</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="icon-heart"></i>
+                                <span>Favoriler</span>
+                            </a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div class="dropdown-divider"></div>
+                                <a asp-controller="Admin" asp-action="ProductList" class="dropdown-item admin-item">
+                                    <i class="icon-settings"></i>
+                                    <span>Admin Panel</span>
+                                </a>
+                            }
+                            <div class="dropdown-divider"></div>
+                            <a asp-controller="Account" asp-action="Logout" class="dropdown-item logout-item">
+                                <i class="icon-log-out"></i>
+                                <span>Çıkış Yap</span>
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="action-btn login-btn">
+                        <div class="btn-icon">
+                            <i class="icon-log-in"></i>
+                        </div>
+                        <span class="btn-text">Giriş</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Mobile Toggle -->
+        <button class="mobile-toggle" id="mobileToggle">
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Overlay -->
+<div class="mobile-overlay" id="mobileOverlay"></div>
