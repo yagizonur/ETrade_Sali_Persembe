@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ETICARET.DataAccess.Concrete
 {
-    public class EfCoreOrdelDal : EfCoreGenericRepository<Order, DataContext>, IOrderDal
+    public class EfCoreOrderDal : EfCoreGenericRepository<Order, DataContext>, IOrderDal
     {
         public List<Order> GetOrders(string userId)
         {

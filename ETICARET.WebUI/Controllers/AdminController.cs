@@ -305,6 +305,7 @@ namespace ETICARET.WebUI.Controllers
             return View(new CategoryModel());
         }
 
+        [HttpPost]
         public IActionResult CreateCategory(CategoryModel model)
         {
             var entity = new Category()

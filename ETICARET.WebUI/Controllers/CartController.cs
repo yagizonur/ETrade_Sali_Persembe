@@ -33,7 +33,8 @@ namespace ETICARET.WebUI.Controllers
         public IActionResult Index()
         {
             var cart = _cartService.GetCartByUserId(_userManager.GetUserId(User));
-
+           
+            // TODO: Cart null geliyor 
             return View(
                 new CartModel()
                 {

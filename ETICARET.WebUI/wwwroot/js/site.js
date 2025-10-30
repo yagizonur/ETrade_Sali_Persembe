@@ -1,4 +1,10 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
+﻿function paymentMethodChangeEvent(paymentType) {
+    if (paymentType == "credit") {
+        var paymentBox = document.getElementById("payment-box")
+        paymentBox.style.display = "block";
+    }
+    else {
+        var paymentBox = document.getElementById("payment-box")
+        paymentBox.style.display = "none";
+    }
+}
