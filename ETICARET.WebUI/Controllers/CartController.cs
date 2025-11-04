@@ -8,7 +8,6 @@ using Iyzipay.Model;
 using Iyzipay.Request;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Abstractions;
 using System.Net;
 using OrderItem = ETICARET.Entities.OrderItem;
 
@@ -17,6 +16,7 @@ namespace ETICARET.WebUI.Controllers
 {
     public class CartController : Controller
     {
+
         private ICartService _cartService;
         private IOrderService _orderService;
         private IProductService _productService;
@@ -33,8 +33,7 @@ namespace ETICARET.WebUI.Controllers
         public IActionResult Index()
         {
             var cart = _cartService.GetCartByUserId(_userManager.GetUserId(User));
-           
-            // TODO: Cart null geliyor 
+
             return View(
                 new CartModel()
                 {
@@ -61,6 +60,7 @@ namespace ETICARET.WebUI.Controllers
         public IActionResult DeleteFromCart(int productId)
         {
             _cartService.DeleteFromCart(_userManager.GetUserId(User), productId);
+
             return RedirectToAction("Index");
         }
 
@@ -73,14 +73,15 @@ namespace ETICARET.WebUI.Controllers
             orderModel.CartModel = new CartModel()
             {
                 CartId = cart.Id,
-                CartItems = cart.CartItems.Select(i => new CartItemModel()
+                CartItems = cart.CartItems.Select(İ => new CartItemModel()
                 {
-                    CartItemId = i.Id,
-                    ProductId = i.ProductId,
-                    Name = i.Product.Name,
-                    Price = i.Product.Price,
-                    ImageUrl = i.Product.Images[0].ImageUrl,
-                    Quantity = i.Quantity
+                    CartItemId = İ.Id,
+                    ProductId = İ.ProductId,
+                    Name = İ.Product.Name,
+                    Price = İ.Product.Price,
+                    ImageUrl = İ.Product.Images[0].ImageUrl,
+                    Quantity = İ.Quantity
+
                 }).ToList()
             };
 
@@ -108,17 +109,18 @@ namespace ETICARET.WebUI.Controllers
                         Price = i.Product.Price,
                         ImageUrl = i.Product.Images[0].ImageUrl,
                         Quantity = i.Quantity
+
                     }).ToList()
                 };
 
-                if(paymentMethod == "credit")
+                if (paymentMethod == "credit")
                 {
-                    var payment = PaymentProcess(model);
+                    var payment = PaymentProccess(model);
 
-                    if(payment.Status == "success")
+                    if (payment.Status == "success")
                     {
                         SaveOrder(model, payment, userId);
-                        _cartService.ClearCart(cart.Id.ToString());
+                        ClearCart(cart.Id.ToString());
                         TempData.Put("message", new ResultModel()
                         {
                             Title = "Order Completed",
@@ -128,7 +130,6 @@ namespace ETICARET.WebUI.Controllers
 
                         return View("Success");
                     }
-
                     else
                     {
                         TempData.Put("message", new ResultModel()
@@ -143,20 +144,25 @@ namespace ETICARET.WebUI.Controllers
                 else
                 {
                     SaveOrder(model, userId);
-                    _cartService.ClearCart(cart.Id.ToString());
+                    ClearCart(cart.Id.ToString());
                     TempData.Put("message", new ResultModel()
                     {
-
                         Title = "Order Completed",
                         Message = "Tebrikler. Siparişiniz başarılı bir şekilde alınmıştır.",
                         Css = "success"
                     });
+
+                    return View("Success");
                 }
             }
 
             return View(model);
         }
 
+        private void ClearCart(string cartId)
+        {
+            _cartService.ClearCart(cartId);
+        }
         // EFT için çalışan sipariş kaydet methodu
         private void SaveOrder(OrderModel model, string userId)
         {
@@ -169,7 +175,6 @@ namespace ETICARET.WebUI.Controllers
                 ConversionId = Guid.NewGuid().ToString(),
                 PaymentId = Guid.NewGuid().ToString(),
                 OrderNote = model.OrderNote,
-                OrderDate = DateTime.Now,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Address = model.Address,
@@ -177,8 +182,47 @@ namespace ETICARET.WebUI.Controllers
                 City = model.City,
                 UserId = userId,
                 Phone = model.Phone,
+
             };
 
+            foreach (var item in model.CartModel.CartItems)
+            {
+                var orderItem = new OrderItem()
+                {
+                    Price = item.Price,
+                    Quantity = item.Quantity,
+                    ProductId = item.ProductId,
+                };
+
+                order.OrderItems.Add(orderItem);
+
+            }
+
+            _orderService.Create(order);
+
+        }
+
+        // Kredi kartı için çalışan sipariş kaydet methodu
+        private void SaveOrder(OrderModel model, Payment payment, string userId)
+        {
+            var order = new Order()
+            {
+                OrderNumber = Guid.NewGuid().ToString(),
+                OrderState = EnumOrderState.completed,
+                PaymentTypes = EnumPaymentTypes.CreditCard,
+                PaymentToken = Guid.NewGuid().ToString(),
+                ConversionId = payment.ConversationId,
+                PaymentId = payment.PaymentId,
+                OrderNote = model.OrderNote,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Address = model.Address,
+                Email = model.Email,
+                City = model.City,
+                UserId = userId,
+                Phone = model.Phone,
+
+            };
 
             foreach (var item in model.CartModel.CartItems)
             {
@@ -195,44 +239,8 @@ namespace ETICARET.WebUI.Controllers
             _orderService.Create(order);
         }
 
-        // Kredi kartı iiçin çalışan sipariş kaydet methodu
-        private void SaveOrder(OrderModel model, Payment payment, string userId)
-        {
-            var order = new Order()
-            {
-                OrderNumber = Guid.NewGuid().ToString(),
-                OrderState = EnumOrderState.completed,
-                PaymentTypes = EnumPaymentTypes.CreditCard,
-                PaymentToken = Guid.NewGuid().ToString(),
-                ConversionId = payment.ConversationId,
-                PaymentId = payment.PaymentId,
-                OrderNote = model.OrderNote,
-                OrderDate = DateTime.Now,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Address = model.Address,
-                Email = model.Email,
-                City = model.City,
-                UserId = userId,
-                Phone = model.Phone
-            };
 
-            foreach (var item in model.CartModel.CartItems)
-            {
-                var orderItem = new OrderItem()
-                {
-                    Price = item.Price,
-                    Quantity = item.Quantity,
-                    ProductId = item.ProductId
-                };
-
-                order.OrderItems.Add(orderItem);
-            }
-
-            _orderService.Create(order);
-        }
-        // sşdfsşfsşfsfs
-        private Payment PaymentProcess(OrderModel model)
+        private Payment PaymentProccess(OrderModel model)
         {
             Options options = new Options()
             {
@@ -318,19 +326,15 @@ namespace ETICARET.WebUI.Controllers
                     Name = cartItem.Name,
                     Category1 = _productService.GetProductDetail(cartItem.ProductId).ProductCategories.FirstOrDefault().CategoryId.ToString(),
                     ItemType = BasketItemType.PHYSICAL.ToString(),
-                    Price = (cartItem.Price - cartItem.Quantity).ToString().Split(",")[0]
-
+                    Price = (cartItem.Price * cartItem.Quantity).ToString().Split(",")[0],
                 };
-
                 basketItems.Add(basketItem);
             }
-
             request.BasketItems = basketItems;
 
             Payment payment = Payment.Create(request, options);
 
             return payment;
-            
         }
 
         public IActionResult GetOrders()
@@ -342,11 +346,12 @@ namespace ETICARET.WebUI.Controllers
 
             OrderListModel orderModel;
 
-            foreach(var order in orders)
+            foreach (var order in orders)
             {
                 orderModel = new OrderListModel();
                 orderModel.OrderId = order.Id;
                 orderModel.OrderNumber = order.OrderNumber;
+                orderModel.OrderDate = order.OrderDate;
                 orderModel.OrderNote = order.OrderNote;
                 orderModel.OrderState = order.OrderState;
                 orderModel.PaymentTypes = order.PaymentTypes;
@@ -367,9 +372,12 @@ namespace ETICARET.WebUI.Controllers
                 }).ToList();
 
                 orderListModel.Add(orderModel);
+
             }
 
             return View(orderListModel);
         }
+
+
     }
 }
