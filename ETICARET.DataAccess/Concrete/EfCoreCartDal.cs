@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETICARET.DataAccess.Concrete
+namespace ETICARET.DataAccess.Concrete.EfCore
 {
     public class EfCoreCartDal : EfCoreGenericRepository<Cart, DataContext>, ICartDal
     {
@@ -15,17 +15,16 @@ namespace ETICARET.DataAccess.Concrete
         {
             using (var context = new DataContext())
             {
-                var cmd = @"DELETE FROM CartItem WHERE CartId = @p0";
+                var cmd = @"delete from CartItem where CartId=@p0";
                 context.Database.ExecuteSqlRaw(cmd, cartId);
             }
         }
 
-
-        public void DeleteFromCart(string cartId, int productId)
+        public void DeleteFromCart(int cartId, int productId)
         {
             using (var context = new DataContext())
             {
-                var cmd = @"DELETE FROM CartItem WHERE CartId = @p0 AND ProductId = @p1";
+                var cmd = @"delete from CartItem where CartId=@p0 and ProductId=@p1";
                 context.Database.ExecuteSqlRaw(cmd, cartId, productId);
             }
         }
@@ -35,10 +34,10 @@ namespace ETICARET.DataAccess.Concrete
             using (var context = new DataContext())
             {
                 return context.Carts
-                    .Include(i => i.CartItems)
-                    .ThenInclude(i => i.Product)
-                    .ThenInclude(i => i.Images)
-                    .FirstOrDefault(i => i.UserId == userId);
+                       .Include(i => i.CartItems)
+                       .ThenInclude(i => i.Product)
+                       .ThenInclude(i => i.Images)
+                       .FirstOrDefault(i => i.UserId == userId);
             }
         }
 

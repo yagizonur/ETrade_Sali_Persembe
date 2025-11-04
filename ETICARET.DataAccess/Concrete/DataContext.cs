@@ -13,7 +13,7 @@ namespace ETICARET.DataAccess.Concrete
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=204-HOCAPC1\\SQLDERS;Database=ETradeDB;Trusted_Connection=True;TrustServerCertificate=True;uid=sa;pwd=1");
+            optionsBuilder.UseSqlServer("Server=DESKTOP-VP42OBV\\SQLEXPRESS;Database=ETradeDB;Trusted_Connection=True;TrustServerCertificate=True;uid=sa;pwd=1");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
