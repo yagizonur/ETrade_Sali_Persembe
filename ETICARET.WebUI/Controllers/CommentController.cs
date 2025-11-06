@@ -22,19 +22,34 @@ namespace ETICARET.WebUI.Controllers
 
         public IActionResult ShowProductComments(int? id)
         {
-            if (id == null)
+
+            if(id == null)
             {
                 return BadRequest();
             }
 
             Product product = _productService.GetProductDetail(id.Value);
 
-            if (product is null)
+            if (product == null)
             {
                 return NotFound();
             }
 
+            var users = new Dictionary<string, string>();
+
+            foreach (var comment in product.Comments)
+            {
+                if (!users.ContainsKey(comment.UserId))
+                {
+                    var user = _userManager.FindByIdAsync(comment.UserId).Result;
+                    users[comment.UserId] = user?.UserName;
+                }
+            }
+
+            ViewBag.UserNames = users;
+
             return PartialView("_PartialComments", product.Comments);
+
         }
 
         public IActionResult Delete(int? id)

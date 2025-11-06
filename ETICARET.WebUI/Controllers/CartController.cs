@@ -31,6 +31,12 @@ namespace ETICARET.WebUI.Controllers
         public IActionResult Index()
         {
             var cart = _cartService.GetCartByUserId(_userManager.GetUserId(User));
+            
+            if(cart == null)
+            {
+                _cartService.InitialCart(_userManager.GetUserId(User));
+                cart = _cartService.GetCartByUserId(_userManager.GetUserId(User));
+            }
 
             return View(
                 new CartModel()
@@ -51,7 +57,6 @@ namespace ETICARET.WebUI.Controllers
         public IActionResult AddToCart(int productId, int quantity)
         {
             _cartService.AddToCart(_userManager.GetUserId(User), productId, quantity);
-
             return RedirectToAction("Index");
         }
 

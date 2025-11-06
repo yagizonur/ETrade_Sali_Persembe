@@ -1,4 +1,4 @@
-﻿CommentBodyId = "#comment";
+﻿var CommentBodyId = "#comment";
 var productId = -1;
 
 function imageBox(smallImg) {

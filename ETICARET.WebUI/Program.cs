@@ -2,7 +2,7 @@ using ETICARET.Business.Abstract;
 using ETICARET.Business.Concrete;
 using ETICARET.DataAccess.Abstract;
 using ETICARET.DataAccess.Concrete;
-using ETICARET.DataAccess.Concrete.EfCore;
+using ETICARET.DataAccess.Concrete;
 using ETICARET.WebUI.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

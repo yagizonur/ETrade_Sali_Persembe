@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETICARET.DataAccess.Concrete.EfCore
+namespace ETICARET.DataAccess.Concrete
 {
     public class EfCoreCartDal : EfCoreGenericRepository<Cart, DataContext>, ICartDal
     {
@@ -52,3 +52,5 @@ namespace ETICARET.DataAccess.Concrete.EfCore
         }
     }
 }
+
+
