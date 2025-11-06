@@ -11,16 +11,14 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using OrderItem = ETICARET.Entities.OrderItem;
 
-
 namespace ETICARET.WebUI.Controllers
 {
     public class CartController : Controller
     {
-
-        private ICartService _cartService;
-        private IOrderService _orderService;
-        private IProductService _productService;
-        private UserManager<ApplicationUser> _userManager;
+        private readonly ICartService _cartService;
+        private readonly IOrderService _orderService;
+        private readonly IProductService _productService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public CartController(ICartService cartService, IOrderService orderService, IProductService productService, UserManager<ApplicationUser> userManager)
         {
@@ -73,14 +71,14 @@ namespace ETICARET.WebUI.Controllers
             orderModel.CartModel = new CartModel()
             {
                 CartId = cart.Id,
-                CartItems = cart.CartItems.Select(İ => new CartItemModel()
+                CartItems = cart.CartItems.Select(i => new CartItemModel()
                 {
-                    CartItemId = İ.Id,
-                    ProductId = İ.ProductId,
-                    Name = İ.Product.Name,
-                    Price = İ.Product.Price,
-                    ImageUrl = İ.Product.Images[0].ImageUrl,
-                    Quantity = İ.Quantity
+                    CartItemId = i.Id,
+                    ProductId = i.ProductId,
+                    Name = i.Product.Name,
+                    Price = i.Product.Price,
+                    ImageUrl = i.Product.Images[0].ImageUrl,
+                    Quantity = i.Quantity
 
                 }).ToList()
             };
@@ -117,13 +115,13 @@ namespace ETICARET.WebUI.Controllers
                 {
                     var payment = PaymentProccess(model);
 
-                    if (payment.Status == "success")
+                    if (payment.Result.Status == "success")
                     {
                         SaveOrder(model, payment, userId);
-                        ClearCart(cart.Id.ToString());
+                        ClearCart(cart.Id);
                         TempData.Put("message", new ResultModel()
                         {
-                            Title = "Order Completed",
+                            Title = "Sipariş Tamamlandı",
                             Message = "Tebrikler. Siparişiniz başarılı bir şekilde alınmıştır.",
                             Css = "success"
                         });
@@ -135,19 +133,18 @@ namespace ETICARET.WebUI.Controllers
                         TempData.Put("message", new ResultModel()
                         {
                             Title = "Hata",
-                            Message = payment.ErrorMessage,
+                            Message = payment.Result.ErrorMessage,
                             Css = "danger"
                         });
                     }
                 }
-
                 else
                 {
                     SaveOrder(model, userId);
-                    ClearCart(cart.Id.ToString());
+                    ClearCart(cart.Id);
                     TempData.Put("message", new ResultModel()
                     {
-                        Title = "Order Completed",
+                        Title = "Sipariş Tamamlandı",
                         Message = "Tebrikler. Siparişiniz başarılı bir şekilde alınmıştır.",
                         Css = "success"
                     });
@@ -159,17 +156,18 @@ namespace ETICARET.WebUI.Controllers
             return View(model);
         }
 
-        private void ClearCart(string cartId)
+        private void ClearCart(int cartId)
         {
             _cartService.ClearCart(cartId);
         }
-        // EFT için çalışan sipariş kaydet methodu
+
+        // EFT için sipariş kaydet methodu
         private void SaveOrder(OrderModel model, string userId)
         {
             var order = new Order()
             {
                 OrderNumber = Guid.NewGuid().ToString(),
-                OrderState = EnumOrderState.completed,
+                OrderState = EnumOrderState.waiting,
                 PaymentTypes = EnumPaymentTypes.Eft,
                 PaymentToken = Guid.NewGuid().ToString(),
                 ConversionId = Guid.NewGuid().ToString(),
@@ -182,7 +180,7 @@ namespace ETICARET.WebUI.Controllers
                 City = model.City,
                 UserId = userId,
                 Phone = model.Phone,
-
+                OrderDate = DateTime.Now
             };
 
             foreach (var item in model.CartModel.CartItems)
@@ -195,15 +193,13 @@ namespace ETICARET.WebUI.Controllers
                 };
 
                 order.OrderItems.Add(orderItem);
-
             }
 
             _orderService.Create(order);
-
         }
 
-        // Kredi kartı için çalışan sipariş kaydet methodu
-        private void SaveOrder(OrderModel model, Payment payment, string userId)
+        // Kredi kartı için sipariş kaydet methodu
+        private void SaveOrder(OrderModel model, Task<Payment> payment, string userId)
         {
             var order = new Order()
             {
@@ -211,8 +207,8 @@ namespace ETICARET.WebUI.Controllers
                 OrderState = EnumOrderState.completed,
                 PaymentTypes = EnumPaymentTypes.CreditCard,
                 PaymentToken = Guid.NewGuid().ToString(),
-                ConversionId = payment.ConversationId,
-                PaymentId = payment.PaymentId,
+                ConversionId = payment.Result.ConversationId,
+                PaymentId = payment.Result.PaymentId,
                 OrderNote = model.OrderNote,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
@@ -221,7 +217,7 @@ namespace ETICARET.WebUI.Controllers
                 City = model.City,
                 UserId = userId,
                 Phone = model.Phone,
-
+                OrderDate = DateTime.Now
             };
 
             foreach (var item in model.CartModel.CartItems)
@@ -239,8 +235,7 @@ namespace ETICARET.WebUI.Controllers
             _orderService.Create(order);
         }
 
-
-        private Payment PaymentProccess(OrderModel model)
+        private async Task<Payment> PaymentProccess(OrderModel model)
         {
             Options options = new Options()
             {
@@ -249,14 +244,14 @@ namespace ETICARET.WebUI.Controllers
                 SecretKey = "sandbox-cmJxJfaGlVarqNV3c5ZQcMTwVNh8qswx"
             };
 
-            string externalIpString = new WebClient().DownloadString("http://icanhazip.com").Replace("\\r\\n", "").Replace("\\n", "").Trim();
+            string externalIpString = new WebClient().DownloadString("https://icanhazip.com").Replace("\\r\\n", "").Replace("\\n", "").Trim();
             var externalIp = IPAddress.Parse(externalIpString);
 
             CreatePaymentRequest request = new CreatePaymentRequest();
             request.Locale = Locale.TR.ToString();
             request.ConversationId = Guid.NewGuid().ToString();
-            request.Price = model.CartModel.TotalPrice().ToString().Split(",")[0];
-            request.PaidPrice = model.CartModel.TotalPrice().ToString().Split(",")[0];
+            request.Price = model.CartModel.TotalPrice().ToString().Split(',')[0];
+            request.PaidPrice = model.CartModel.TotalPrice().ToString().Split(',')[0];
             request.Currency = Currency.TRY.ToString();
             request.Installment = 1;
             request.BasketId = model.CartModel.CartId.ToString();
@@ -286,36 +281,25 @@ namespace ETICARET.WebUI.Controllers
                 RegistrationAddress = model.Address,
                 Ip = externalIp.ToString(),
                 City = model.City,
-                Country = "TURKEY",
+                Country = "Turkey",
                 ZipCode = "34000"
             };
 
             request.Buyer = buyer;
 
-            Address shippingAddress = new Address()
+            Address address = new Address()
             {
-                ContactName = model.FirstName,
+                ContactName = model.FirstName + " " + model.LastName,
                 City = model.City,
-                Country = "TURKEY",
+                Country = "Turkey",
                 Description = model.Address,
                 ZipCode = "34000"
             };
 
-            request.ShippingAddress = shippingAddress;
-
-            Address billingAddress = new Address()
-            {
-                ContactName = model.FirstName,
-                City = model.City,
-                Country = "TURKEY",
-                Description = model.Address,
-                ZipCode = "34000"
-            };
-
-            request.BillingAddress = billingAddress;
+            request.ShippingAddress = address;
+            request.BillingAddress = address;
 
             List<BasketItem> basketItems = new List<BasketItem>();
-
             BasketItem basketItem;
 
             foreach (var cartItem in model.CartModel.CartItems)
@@ -326,13 +310,14 @@ namespace ETICARET.WebUI.Controllers
                     Name = cartItem.Name,
                     Category1 = _productService.GetProductDetail(cartItem.ProductId).ProductCategories.FirstOrDefault().CategoryId.ToString(),
                     ItemType = BasketItemType.PHYSICAL.ToString(),
-                    Price = (cartItem.Price * cartItem.Quantity).ToString().Split(",")[0],
+                    Price = (cartItem.Price * cartItem.Quantity).ToString().Split(',')[0],
                 };
                 basketItems.Add(basketItem);
             }
+
             request.BasketItems = basketItems;
 
-            Payment payment = Payment.Create(request, options);
+            Payment payment = await Payment.Create(request, options);
 
             return payment;
         }
@@ -372,12 +357,9 @@ namespace ETICARET.WebUI.Controllers
                 }).ToList();
 
                 orderListModel.Add(orderModel);
-
             }
 
             return View(orderListModel);
         }
-
-
     }
 }

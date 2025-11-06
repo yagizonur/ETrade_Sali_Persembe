@@ -19,42 +19,39 @@ namespace ETICARET.Business.Concrete
         }
         public void AddToCart(string userId, int productId, int quantity)
         {
-            var cart = GetCartByUserId(userId);
+            Cart cart = GetCartByUserId(userId);
 
             if (cart is not null)
             {
-                var index = cart.CartItems.FindIndex(i => i.ProductId == productId);
-                if (index < 0)
-                {
-                    cart.CartItems.Add(
-                        new CartItem()
-                        {
-                            ProductId = productId,
-                            Quantity = quantity,
-                            CartId = cart.Id
-                        }
+                var index = cart.CartItems.FindIndex(x => x.ProductId == productId);
 
-                    );
+                if (index < 0) // Eğer ürün sepette hiç yoksa sepete ürünü ekler
+                {
+                    cart.CartItems.Add(new CartItem
+                    {
+                        ProductId = productId,
+                        Quantity = quantity,
+                        CartId = cart.Id
+                    });
                 }
-                else
+                else // Eğer ürün sepette varsa sepetteki ürünün sayısını arttırır.
                 {
                     cart.CartItems[index].Quantity += quantity;
                 }
-
-                _cartDal.Update(cart); // dataaccess aracılığı ile sepeti günceller.
             }
+
+            _cartDal.Update(cart); // DataAccess aracılığıyla sepeti günceller
         }
 
-        public void ClearCart(string cartId)
+        public void ClearCart(int cartId)
         {
             _cartDal.ClearCart(cartId);
         }
 
         public void DeleteFromCart(string userId, int productId)
         {
-            var cart = GetCartByUserId(userId);
-
-            if (cart != null)
+            Cart cart = GetCartByUserId(userId);
+            if (cart is not null)
             {
                 _cartDal.DeleteFromCart(cart.Id, productId);
             }
@@ -67,7 +64,12 @@ namespace ETICARET.Business.Concrete
 
         public void InitialCart(string userId)
         {
-            _cartDal.Create(new Cart() { UserId = userId });
+            Cart cart = new Cart()
+            {
+                UserId = userId
+            };
+
+            _cartDal.Create(cart);
         }
     }
 }

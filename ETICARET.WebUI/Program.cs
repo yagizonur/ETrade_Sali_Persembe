@@ -10,61 +10,49 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews();
 
+// Configure Identity DbContext
 builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection")));
 
+// Configure Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 6;
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
-                .AddDefaultTokenProviders();
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 
-// Seed Identity
-var userManager = builder.Services.BuildServiceProvider().GetService<UserManager<ApplicationUser>>();
-var roleManager = builder.Services.BuildServiceProvider().GetService<RoleManager<IdentityRole>>();
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+})
+.AddEntityFrameworkStores<ApplicationIdentityDbContext>()
+.AddDefaultTokenProviders();
 
-
-builder.Services.Configure<IdentityOptions>(
-    options =>
+// Configure Cookie Settings
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(3);
+    options.SlidingExpiration = true;
+    options.Cookie = new CookieBuilder
     {
-        options.Password.RequireNonAlphanumeric = true;
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequiredLength = 0;
+        HttpOnly = true,
+        Name = "ETICARET.Security.Cookie",
+        SameSite = SameSiteMode.Strict
+    };
+});
 
-        options.Lockout.AllowedForNewUsers = true;
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-
-        options.User.RequireUniqueEmail = true;
-        options.SignIn.RequireConfirmedEmail = true;
-        options.SignIn.RequireConfirmedPhoneNumber = false;
-    }
-);
-
-// Cookie Configuration
-
-builder.Services.ConfigureApplicationCookie(
-    options =>
-    {
-        options.AccessDeniedPath = "/Account/accesdenied";
-        options.LoginPath = "/Account/login";
-        options.LogoutPath = "/Account/Logout";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-        options.SlidingExpiration = true;
-        options.Cookie = new CookieBuilder()
-        {
-            HttpOnly = true,
-            Name = "ETICARET.Security.Cookie",
-            SameSite = SameSiteMode.Strict
-        };
-    }
-);
-
-// Dataaccess and Business
-
+// Register Services
 builder.Services.AddScoped<IProductDal, EfCoreProductDal>();
 builder.Services.AddScoped<IProductService, ProductManager>();
 builder.Services.AddScoped<ICategoryDal, EfCoreCategoryDal>();
@@ -76,85 +64,73 @@ builder.Services.AddScoped<ICartService, CartManager>();
 builder.Services.AddScoped<IOrderDal, EfCoreOrderDal>();
 builder.Services.AddScoped<IOrderService, OrderManager>();
 
-
-// Projeyi MVC mimarisi olacak þekilde tanýmlama
-
-builder.Services.AddMvc().SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Latest);
-
-
 var app = builder.Build();
 
-
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
-// Dataacces Seed Database (Product,Category,ProductCategory)
-SeedDatabase.Seed();
-
-
-
-app.UseStaticFiles();
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
-// endpoints
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
-
-    endpoints.MapControllerRoute(
-            name: "products",
-            pattern: "products/{category?}",
-            defaults: new { controller = "Shop", action = "List" }
-    );
-    endpoints.MapControllerRoute(
-            name: "adminProducts",
-            pattern: "admin/products",
-            defaults: new { controller = "Admin", action = "ProductList" }
-    );
-    endpoints.MapControllerRoute(
-            name: "adminProducts",
-            pattern: "admin/products/{id?}",
-            defaults: new { controller = "Admin", action = "EditProduct" }
-    );
-    endpoints.MapControllerRoute(
-            name: "adminProducts",
-            pattern: "admin/categories",
-            defaults: new { controller = "Admin", action = "CategoryList" }
-    );
-    endpoints.MapControllerRoute(
-            name: "adminProducts",
-            pattern: "admin/categories/{id?}",
-            defaults: new { controller = "Admin", action = "EditCategory" }
-    );
-    endpoints.MapControllerRoute(
-            name: "cart",
-            pattern: "cart",
-            defaults: new { controller = "Cart", action = "Index" }
-    );
-    endpoints.MapControllerRoute(
-            name: "checkout",
-            pattern: "checkout",
-            defaults: new { controller = "Cart", action = "Checkout" }
-    );
-    endpoints.MapControllerRoute(
-            name: "orders",
-            pattern: "orders",
-            defaults: new { controller = "Cart", action = "GetOrders" }
-    );
-
-}
+// Configure routes
+app.MapControllerRoute(
+    name: "products",
+    pattern: "products/{category?}",
+    defaults: new { controller = "Shop", action = "List" }
 );
 
-// Seed Identity
+app.MapControllerRoute(
+    name: "adminProducts",
+    pattern: "admin/products/{id?}",
+    defaults: new { controller = "Admin", action = "ProductList" }
+);
 
-SeedIdentity.Seed(userManager, roleManager, app.Configuration).Wait();
+app.MapControllerRoute(
+    name: "adminCategories",
+    pattern: "admin/categories/{id?}",
+    defaults: new { controller = "Admin", action = "CategoryList" }
+);
+
+app.MapControllerRoute(
+    name: "cart",
+    pattern: "cart",
+    defaults: new { controller = "Cart", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "checkout",
+    pattern: "checkout",
+    defaults: new { controller = "Cart", action = "Checkout" }
+);
+
+app.MapControllerRoute(
+    name: "orders",
+    pattern: "orders",
+    defaults: new { controller = "Cart", action = "GetOrders" }
+);
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Seed database
+SeedDatabase.Seed();
+
+// Seed Identity roles and admin user
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await SeedIdentity.Seed(userManager, roleManager, app.Configuration);
+}
 
 app.Run();

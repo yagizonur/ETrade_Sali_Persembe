@@ -3,33 +3,57 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Üçüncübinyıl ETİCARET</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
-    <script src="/jquery/dist/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://kit.fontawesome.com/d739071501.js" crossorigin="anonymous"></script>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     <partial name="_navbar" />
-    <div class="container pageContainer mb-5">
+    
+    <div class="container pageContainer">
         @if (TempData["message"] != null)
         {
             <partial name="_resultMessage" model="@(TempData.Get<ResultModel>("message"))" />
         }
 
-        <main role="main" class="pb-3">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container text-center py-3">
-            &copy; 2024 - Üçüncübinyıl ETİCARET - Tüm hakları saklıdır.
+        <div class="container">
+            <div class="row py-3">
+                <div class="col-md-4 text-center text-md-start">
+                    <h5>Üçüncübinyıl ETİCARET</h5>
+                    <p class="small mb-0">&copy; 2024 - Tüm hakları saklıdır.</p>
+                </div>
+                <div class="col-md-4 text-center my-3 my-md-0">
+                    <h5>Hızlı Bağlantılar</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-muted text-decoration-none">Ana Sayfa</a></li>
+                        <li><a href="/products" class="text-muted text-decoration-none">Ürünler</a></li>
+                        <li><a href="/cart" class="text-muted text-decoration-none">Sepetim</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 text-center text-md-end">
+                    <h5>Bizi Takip Edin</h5>
+                    <div class="social-links">
+                        <a href="#" class="text-muted me-2"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-muted me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-muted me-2"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 
-    <script src="/modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
